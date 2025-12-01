@@ -49,8 +49,9 @@ jobs:
 
       - name: Build Wheel
         run: |
+          pip install setuptools wheel
           python setup.py bdist_wheel
-
+        
       - name: Upload Artifacts
         run: |
           export BUILD_NUMBER=${{ github.run_number }}
