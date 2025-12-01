@@ -1,0 +1,107 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# Required for OIDC
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    env:
+      JF_URL: ${{ secrets.JF_URL }}
+      PROJECT_KEY: tlvw
+      BUILD_NAME: tlv-weather-build
+      
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Setup JFrog CLI (OIDC)
+        uses: jfrog/setup-jfrog-cli@v4
+        with:
+          version: latest
+          oidc-provider-name: github-oidc
+        env:
+          JF_URL: ${{ secrets.JF_URL }}
+
+      - name: Install Dependencies (via Artifactory)
+        run: |
+          export BUILD_NUMBER=${{ github.run_number }}
+          
+          # Configure Pip
+          jf pip-config --repo-resolve=tlv-pypi-virtual
+          
+          # Install
+          jf pip install -r requirements.txt --no-cache-dir --force-reinstall \
+            --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER --project=$PROJECT_KEY
+
+      - name: Build Wheel
+        run: |
+          python setup.py bdist_wheel
+
+      - name: Upload Artifacts
+        run: |
+          export BUILD_NUMBER=${{ github.run_number }}
+          jf rt u "dist/*.whl" tlv-pypi-local \
+            --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER \
+            --project=$PROJECT_KEY
+
+      - name: Collect Build Info
+        run: |
+          export BUILD_NUMBER=${{ github.run_number }}
+          jf rt bag $BUILD_NAME $BUILD_NUMBER --project=$PROJECT_KEY
+          jf rt bce $BUILD_NAME $BUILD_NUMBER --project=$PROJECT_KEY
+
+      - name: Publish Build Info
+        run: |
+          export BUILD_NUMBER=${{ github.run_number }}
+          jf rt bp $BUILD_NAME $BUILD_NUMBER --project=$PROJECT_KEY
+
+  promote-and-test:
+    needs: build-and-publish
+    runs-on: ubuntu-latest
+    env:
+      JF_URL: ${{ secrets.JF_URL }}
+      PROJECT_KEY: tlvw
+      BUILD_NAME: tlv-weather-build
+      
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup JFrog CLI (OIDC)
+        uses: jfrog/setup-jfrog-cli@v4
+        with:
+          version: latest
+          oidc-provider-name: github-oidc
+        env:
+          JF_URL: ${{ secrets.JF_URL }}
+
+      - name: Promote to Staging
+        run: |
+          export BUILD_NUMBER=${{ github.run_number }}
+          
+          jf rt bpr $BUILD_NAME $BUILD_NUMBER tlv-pypi-staging-local \
+            --status="STAGED" \
+            --source-repo="tlv-pypi-local" \
+            --comment="Promoted by GitHub Actions #${{ github.run_number }}" \
+            --copy=true \
+            --project=$PROJECT_KEY
+
+      - name: Run Integration Tests
+        run: |
+          pip install pytest flask requests
+          export PYTHONPATH=$PYTHONPATH:.
+          pytest -v tests/
