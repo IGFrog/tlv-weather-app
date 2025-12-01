@@ -187,8 +187,8 @@ def index():
         <script>
             const map = L.map('map').setView([32.0853, 34.7818], 4);
             
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap &copy; CARTO',
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors',
                 subdomains: 'abcd',
                 maxZoom: 19
             }).addTo(map);
