@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='tlv-weather-app',
-    version='1.0.4',
+    version='1.0.9',
     description='A simple Tel Aviv Rain Prediction App',
     author='Irena Guy',
     author_email='irenag@jfrog.com',

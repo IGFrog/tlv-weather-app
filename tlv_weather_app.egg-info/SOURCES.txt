@@ -1,5 +1,6 @@
 README.md
 setup.py
+tests/test_app.py
 tlv_weather_app.egg-info/PKG-INFO
 tlv_weather_app.egg-info/SOURCES.txt
 tlv_weather_app.egg-info/dependency_links.txt
