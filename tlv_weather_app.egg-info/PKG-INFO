@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: tlv-weather-app
+Version: 1.0.3
+Summary: A simple Tel Aviv Rain Prediction App
+Author: Irena Guy
+Author-email: irenag@jfrog.com
+Requires-Dist: flask
+Requires-Dist: requests
+Requires-Dist: gunicorn
+Dynamic: author
+Dynamic: author-email
+Dynamic: requires-dist
+Dynamic: summary

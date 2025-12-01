@@ -1,0 +1,8 @@
+version: 1
+type: pip
+resolver:
+    repo: tlv-pypi-virtual
+    serverId: my-jfrog
+deployer:
+    repo: tlv-pypi-local
+    serverId: my-jfrog

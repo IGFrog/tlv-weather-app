@@ -1,5 +1,6 @@
 from flask import Flask, render_template_string
 import requests
+import certifi
 
 app = Flask(__name__)
 
@@ -7,7 +8,9 @@ def get_rain_forecast():
     # Tel Aviv coordinates: 32.0853, 34.7818
     url = "https://api.open-meteo.com/v1/forecast?latitude=32.0853&longitude=34.7818&daily=rain_sum,precipitation_probability_max&timezone=auto"
     try:
-        response = requests.get(url)
+        # Verify=False to bypass local SSL issues, or use certifi.where()
+        # Let's try verify=False first as it's the most robust "quick fix" for dev
+        response = requests.get(url, verify=False)
         data = response.json()
         
         # Get today's forecast
@@ -46,6 +49,7 @@ def index():
             <h1>Tel Aviv Weather</h1>
             {% if forecast.error %}
                 <p style="color: red">Error fetching weather data</p>
+                <p style="font-size: 0.8rem; color: #999; word-break: break-all;">{{ forecast.error }}</p>
             {% else %}
                 <div class="status {% if forecast.will_rain %}rainy{% else %}dry{% endif %}">
                     {% if forecast.will_rain %}
@@ -68,4 +72,3 @@ def index():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
-
